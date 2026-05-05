@@ -151,18 +151,17 @@ function polarToCartesian(cx, cy, r, angle) {
 
 function getPlanetColor(name) {
     switch (name) {
-        case '☉': return 'gold'
-        case '☽': return '#bbb'
-        case '♂': return 'red'
-        case '♀': return 'green'
-        case '☿': return 'purple'
-        case '♃': return 'orange'
-        case '♄': return 'brown'
-        case '♅': return '#00bfff'   // 天王星（電気っぽい青）
-        case '♆': return '#4169e1'   // 海王星（深い青）
-        case '♇': return '#222'      // 冥王星（暗め）
-
-        default: return 'blue'
+        case '☉': return '#FFC58F' // warm soft gold
+        case '☽': return '#D6D6D6' // light gray
+        case '♂': return '#F28C8C' // muted red
+        case '♀': return '#9FD8A8' // soft green
+        case '☿': return '#BFA7E6' // muted purple
+        case '♃': return '#FFD08A' // warm pastel orange
+        case '♄': return '#C2B3A5' // soft brown
+        case '♅': return '#8EDFE0' // soft cyan
+        case '♆': return '#7FA9E6' // slightly deeper blue
+        case '♇': return '#9C90E0' // muted violet
+        default: return '#8FB8FF'
     }
 }
 
@@ -208,16 +207,16 @@ function getAspect(a, b) {
 
 function getAspectColor(type) {
     switch (type) {
-        case 'trine': return 'blue'
-        case 'sextile': return 'green'
-        case 'square': return 'red'
-        case 'opposition': return 'orange'
-        case 'conjunction': return 'purple'
-        case 'quincunx': return '#999'
-        case 'semi-square': return '#cc6666'
-        case 'sesqui-square': return '#cc4444'
-        case 'semi-sextile': return '#66cc99'
-        default: return 'gray'
+        case 'trine': return '#7FB3FF'      // clearer blue
+        case 'sextile': return '#8FD3A6'    // clearer green
+        case 'square': return '#F28C8C'     // muted red
+        case 'opposition': return '#FFB774' // soft orange
+        case 'conjunction': return '#BFA7E6'// muted purple
+        case 'quincunx': return '#BDBDBD'
+        case 'semi-square': return '#F4A4A4'
+        case 'sesqui-square': return '#E07A7A'
+        case 'semi-sextile': return '#A8DDB5'
+        default: return '#BDBDBD'
     }
 }
 
@@ -490,7 +489,7 @@ async function calculateChart() {
                 const p2 = polarToCartesian(cx, cy, 100, degB)
 
                 // 基本の太さ
-                let width = 0.5 + strength * 2
+                let width = 0.5 + strength * 1.9
 
                 // ② メジャーアスペクト強調（ここ！）
                 if (['trine', 'square', 'opposition', 'conjunction'].includes(type)) {
@@ -591,23 +590,25 @@ onMounted(async () => {
                     <button @click="calculateChart">Calculate</button>
                 </div>
 
-                <svg width="375" height="375">
+                <svg style="margin-top: 16px;" width="375" height="375">
 
                     <!-- 外円 -->
-                    <circle :cx="cx" :cy="cy" r="174" stroke="black" fill="none" />
-                    <circle :cx="cx" :cy="cy" r="140" stroke="#aaa" fill="none" />
+                    <circle :cx="cx" :cy="cy" r="174" stroke="#454" fill="none" stroke-opacity="0.6"/>
+                    <circle :cx="cx" :cy="cy" r="140" stroke="#aaa" fill="none" stroke-opacity="0.6"/>
 
                     <!-- 星座区切り -->
                     <g>
                         <line v-for="i in 12" :key="i" :x1="cx" :y1="cy" :x2="polarToCartesian(cx, cy, 174, i * 30).x"
-                            :y2="polarToCartesian(cx, cy, 174, i * 30).y" stroke="#ddd" />
+                            :y2="polarToCartesian(cx, cy, 174, i * 30).y" stroke="#888" stroke-opacity="0.2" />
                     </g>
 
                     <!-- 星座 -->
                     <g>
-                        <text v-for="i in 12" :key="'z' + i" :x="polarToCartesian(cx, cy, 155, i * 30 + 15 - 30).x"
-                            :y="polarToCartesian(cx, cy, 155, i * 30 + 15 - 30).y" text-anchor="middle"
-                            alignment-baseline="middle" font-size="16">
+                        <text v-for="i in 12" :key="'z' + i" 
+                            :x="polarToCartesian(cx, cy, 157, i * 30 + 15 - 30).x"
+                            :y="polarToCartesian(cx, cy, 157, i * 30 + 15 - 30).y" 
+                            text-anchor="middle"
+                            alignment-baseline="middle" font-size="14">
                             {{ zodiac[i - 1] }}
                         </text>
                     </g>
@@ -634,10 +635,11 @@ onMounted(async () => {
                         </g>
                     </g>
 
+                    <!-- ハウス区切り -->
                     <g v-if="isReady">
                         <line v-for="(deg, i) in houses.slice(1)" :key="'house' + i" :x1="cx" :y1="cy"
                             :x2="polarToCartesian(cx, cy, 174, deg).x" :y2="polarToCartesian(cx, cy, 174, deg).y"
-                            stroke="#666" stroke-width="1.5" />
+                            stroke="#666" stroke-width="0.8" stroke-opacity="0.6" />
                     </g>
 
                     <g v-if="isReady">
@@ -709,8 +711,13 @@ onMounted(async () => {
 </template>
 
 <style lang="scss">
+body {
+  background: #faf9ff;
+  color: #5c5c5c;
+}
 p{
     margin: 0;
+    color: #5c5c5c;
 }
 .input-panel{
     display: flex;
