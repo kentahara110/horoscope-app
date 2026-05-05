@@ -1,6 +1,25 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
+const birthDate = ref('1993-01-10')
+const birthTime = ref('11:26')
+const birthLocation = ref('tokyo')
+
+const locationData = {
+  tokyo: {
+    name: 'Tokyo',
+    lat: 35.68,
+    lon: 139.76,
+    tz: 'Asia/Tokyo'
+  },
+  montreal: {
+    name: 'Montreal',
+    lat: 45.5017,
+    lon: -73.5673,
+    tz: 'America/Toronto'
+  }
+}
+
 const positions = ref({})
 const aspectLines = ref([])
 const isReady = ref(false)
@@ -11,9 +30,6 @@ const cx = 200
 const cy = 200
 
 // ハウス
-const lat = 35.68   // 東京（仮）
-const lon = 139.76
-
 const houses = ref([])
 const angles = ref({})
 
@@ -71,9 +87,9 @@ const planetName = {
 }
 
 const zodiacName = [
-    'Aries','Taurus','Gemini','Cancer',
-    'Leo','Virgo','Libra','Scorpio',
-    'Sagittarius','Capricorn','Aquarius','Pisces'
+    'Aries', 'Taurus', 'Gemini', 'Cancer',
+    'Leo', 'Virgo', 'Libra', 'Scorpio',
+    'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ]
 
 const aspectLabel = {
@@ -103,6 +119,15 @@ const planetTheme = {
     '♅': 'your need for change and individuality',
     '♆': 'your dreams and intuition',
     '♇': 'your transformation and inner power'
+}
+
+function getOffset(tz, year, month, day, hour, minute) {
+  const date = new Date(Date.UTC(year, month - 1, day, hour, minute))
+
+  const utc = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
+  const target = new Date(date.toLocaleString('en-US', { timeZone: tz }))
+
+  return (target - utc) / (1000 * 60 * 60)
 }
 
 function aspectSentence(a, b, type, degA, degB) {
@@ -277,11 +302,11 @@ function aspectSummaryText() {
 
 function toneSummary() {
     const hasHard = aspectList.value.some(a =>
-        ['square','opposition'].includes(a.type)
+        ['square', 'opposition'].includes(a.type)
     )
 
     const hasSoft = aspectList.value.some(a =>
-        ['trine','sextile'].includes(a.type)
+        ['trine', 'sextile'].includes(a.type)
     )
 
     if (hasHard && hasSoft) {
@@ -322,7 +347,27 @@ function interpretAspectNatural(a, b, type) {
     return `${aspectText[type]} ${planetTheme[a]} and ${planetTheme[b]}.`
 }
 
-onMounted(async () => {
+async function calculateChart() {
+    const [year, month, day] = birthDate.value.split('-').map(Number)
+    const [hour, minute] = birthTime.value.split(':').map(Number)
+
+    // 👇 ここに移動
+    const loc = locationData[birthLocation.value]
+
+    const lat = loc.lat
+    const lon = loc.lon
+
+    const offset = getOffset(
+        loc.tz,
+        year,
+        month,
+        day,
+        hour,
+        minute
+    )
+
+    const utcHour = hour + minute / 60 - offset
+
     const SwissEph = (await import('swisseph-wasm')).default
     const aspectListData = []
 
@@ -332,7 +377,8 @@ onMounted(async () => {
 
     await swe.initSwissEph()
 
-    const jd = swe.julday(1993, 1, 10, 11 + 26 / 60 - 9)
+    // 日本なら -9（UTC）
+    const jd = swe.julday(year, month, day, utcHour)
 
     const housesRes = swe.houses(jd, lat, lon, 'P')
 
@@ -508,20 +554,24 @@ onMounted(async () => {
     })
 
     aspectList.value = aspectListData.map(a => ({
-    ...a,
-    sentence: aspectSentence(
-        a.planetA,
-        a.planetB,
-        a.type,
-        rawPositions[a.planetA],
-        rawPositions[a.planetB]
-    )
-}))
+        ...a,
+        sentence: aspectSentence(
+            a.planetA,
+            a.planetB,
+            a.type,
+            rawPositions[a.planetA],
+            rawPositions[a.planetB]
+        )
+    }))
 
 
     fullReading.value = generateFullReading()
     aspectLines.value = aspectLinesData
     isReady.value = true
+}
+
+onMounted(async () => {
+    calculateChart()
 })
 </script>
 
@@ -529,7 +579,17 @@ onMounted(async () => {
     <ClientOnly>
         <div style="text-align:center">
 
-            <h2>ホロスコープ</h2>
+            <h2>Horoscope</h2>
+
+            <div class="input-panel">
+                <input type="date" v-model="birthDate" />
+                <input type="time" v-model="birthTime" />
+                <select v-model="birthLocation">
+                    <option value="tokyo">Tokyo</option>
+                    <option value="montreal">Montreal</option>
+                </select>
+                <button @click="calculateChart">Calculate</button>
+            </div>
 
             <svg width="400" height="400">
 
@@ -605,11 +665,11 @@ onMounted(async () => {
             <div class="col">
                 <h3>🪐 Planets</h3>
                 <div v-for="p in planetList" :key="p.name">
-  <div><strong>{{ p.sentence }}</strong></div>
-  <div style="font-size:12px;color:#888">
-    {{ p.text }}
-  </div>
-</div>
+                    <div><strong>{{ p.sentence }}</strong></div>
+                    <div style="font-size:12px;color:#888">
+                        {{ p.text }}
+                    </div>
+                </div>
             </div>
 
             <div class="col">
