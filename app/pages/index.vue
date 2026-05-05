@@ -36,8 +36,8 @@ const isReady = ref(false)
 
 const zodiac = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓']
 
-const cx = 200
-const cy = 200
+const cx = 182
+const cy = 182
 
 // ハウス
 const houses = ref([])
@@ -601,25 +601,25 @@ onMounted(async () => {
                     <button @click="calculateChart">Calculate</button>
                 </div>
 
-                <svg style="margin-top: 16px;" width="375" height="375">
+                <svg style="margin-top: 16px;" width="345" height="345">
 
                     <!-- 外円 -->
-                    <circle :cx="cx" :cy="cy" r="174" stroke="#454" fill="none" stroke-opacity="0.6"/>
-                    <circle :cx="cx" :cy="cy" r="140" stroke="#aaa" fill="none" stroke-opacity="0.6"/>
+                    <circle :cx="cx" :cy="cy" r="160" stroke="#454" fill="none" stroke-opacity="0.6"/>
+                    <circle :cx="cx" :cy="cy" r="135" stroke="#aaa" fill="none" stroke-opacity="0.6"/>
 
                     <!-- 星座区切り -->
                     <g>
-                        <line v-for="i in 12" :key="i" :x1="cx" :y1="cy" :x2="polarToCartesian(cx, cy, 174, i * 30).x"
-                            :y2="polarToCartesian(cx, cy, 174, i * 30).y" stroke="#888" stroke-opacity="0.2" />
+                        <line v-for="i in 12" :key="i" :x1="cx" :y1="cy" :x2="polarToCartesian(cx, cy, 160, i * 30).x"
+                            :y2="polarToCartesian(cx, cy, 160, i * 30).y" stroke="#888" stroke-opacity="0.2" />
                     </g>
 
                     <!-- 星座 -->
                     <g>
                         <text v-for="i in 12" :key="'z' + i" 
-                            :x="polarToCartesian(cx, cy, 157, i * 30 + 15 - 30).x"
-                            :y="polarToCartesian(cx, cy, 157, i * 30 + 15 - 30).y" 
+                            :x="polarToCartesian(cx, cy, 148, i * 30 + 15 - 30).x"
+                            :y="polarToCartesian(cx, cy, 148, i * 30 + 15 - 30).y" 
                             text-anchor="middle"
-                            alignment-baseline="middle" font-size="14">
+                            alignment-baseline="middle" font-size="13">
                             {{ zodiac[i - 1] }}
                         </text>
                     </g>
@@ -635,10 +635,10 @@ onMounted(async () => {
                     <g v-if="isReady">
                         <g v-for="(deg, name) in positions" :key="name">
 
-                            <circle :cx="polarToCartesian(cx, cy, 120, deg).x" :cy="polarToCartesian(cx, cy, 120, deg).y"
+                            <circle :cx="polarToCartesian(cx, cy, 115, deg).x" :cy="polarToCartesian(cx, cy, 120, deg).y"
                                 r="4" :fill="getPlanetColor(name)" />
 
-                            <text :x="polarToCartesian(cx, cy, 130, deg).x" :y="polarToCartesian(cx, cy, 130, deg).y"
+                            <text :x="polarToCartesian(cx, cy, 125, deg).x" :y="polarToCartesian(cx, cy, 130, deg).y"
                                 text-anchor="middle" alignment-baseline="middle" font-size="14">
                                 {{ name }}
                             </text>
@@ -649,21 +649,21 @@ onMounted(async () => {
                     <!-- ハウス区切り -->
                     <g v-if="isReady">
                         <line v-for="(deg, i) in houses.slice(1)" :key="'house' + i" :x1="cx" :y1="cy"
-                            :x2="polarToCartesian(cx, cy, 174, deg).x" :y2="polarToCartesian(cx, cy, 174, deg).y"
+                            :x2="polarToCartesian(cx, cy, 160, deg).x" :y2="polarToCartesian(cx, cy, 160, deg).y"
                             stroke="#666" stroke-width="0.8" stroke-opacity="0.6" />
                     </g>
 
                     <g v-if="isReady">
 
                         <!-- ASC -->
-                        <text :x="polarToCartesian(cx, cy, 187, angles.ASC).x"
-                            :y="polarToCartesian(cx, cy, 187, angles.ASC).y" text-anchor="middle" font-size="12">
+                        <text :x="polarToCartesian(cx, cy, 167, angles.ASC).x"
+                            :y="polarToCartesian(cx, cy, 167, angles.ASC).y" text-anchor="middle" font-size="12">
                             ASC
                         </text>
 
                         <!-- MC -->
-                        <text :x="polarToCartesian(cx, cy, 187, angles.MC).x"
-                            :y="polarToCartesian(cx, cy, 187, angles.MC).y" text-anchor="middle" font-size="12">
+                        <text :x="polarToCartesian(cx, cy, 167, angles.MC).x"
+                            :y="polarToCartesian(cx, cy, 167, angles.MC).y" text-anchor="middle" font-size="12">
                             MC
                         </text>
 
@@ -732,7 +732,7 @@ p{
 }
 .input-panel{
     display: flex;
-    gap: 8px;
+    gap: 4px;
 }
 .wrapper{
     width: 100%;
@@ -740,15 +740,16 @@ p{
     flex-direction: column;
     align-items: center;
     gap: 16px;
+    padding-bottom: 60px;
 }
 .panel {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     justify-content: center;
     margin-top: 20px;
 
     .col {
-        width: 170px;
+        width: 165px;
         .planets-item{
             padding: 6px 0;
             border-bottom: 1px solid #eee;
@@ -792,7 +793,7 @@ p{
 }
 
 .aspect-panel {
-    width: 360px;
+    width: 345px;
     text-align: left;
     .aspect-row {
         display: block;
@@ -823,7 +824,7 @@ p{
 
 
 .reading {
-    max-width: 360px;
+    max-width: 345px;
     font-size: 13px;
     line-height: 1.6em;
     text-align: left;
