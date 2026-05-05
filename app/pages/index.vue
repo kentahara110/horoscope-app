@@ -581,7 +581,7 @@ async function calculateChart() {
 
 onMounted(async () => {
     isReady.value = false
-    // calculateChart()
+    calculateChart()
 })
 </script>
 
