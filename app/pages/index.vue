@@ -11,8 +11,8 @@ useHead({
 
 import { ref, onMounted } from 'vue'
 
-const birthDate = ref('1993-01-10')
-const birthTime = ref('11:26')
+const birthDate = ref('1993-01-01')
+const birthTime = ref('00:00')
 const birthLocation = ref('tokyo')
 
 const locationData = {
@@ -580,7 +580,8 @@ async function calculateChart() {
 }
 
 onMounted(async () => {
-    calculateChart()
+    isReady.value = false
+    // calculateChart()
 })
 </script>
 
@@ -707,10 +708,10 @@ onMounted(async () => {
                     </div>
                 </div>
         
-                <h3>
+                <h3 v-if="isReady">
                     Reading
                 </h3>
-                <div class="reading">
+                <div v-if="isReady" class="reading">
                     {{ fullReading }}
                 </div>
             </div>
