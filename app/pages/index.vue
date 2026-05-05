@@ -6,18 +6,18 @@ const birthTime = ref('11:26')
 const birthLocation = ref('tokyo')
 
 const locationData = {
-  tokyo: {
-    name: 'Tokyo',
-    lat: 35.68,
-    lon: 139.76,
-    tz: 'Asia/Tokyo'
-  },
-  montreal: {
-    name: 'Montreal',
-    lat: 45.5017,
-    lon: -73.5673,
-    tz: 'America/Toronto'
-  }
+    tokyo: {
+        name: 'Tokyo',
+        lat: 35.68,
+        lon: 139.76,
+        tz: 'Asia/Tokyo'
+    },
+    montreal: {
+        name: 'Montreal',
+        lat: 45.5017,
+        lon: -73.5673,
+        tz: 'America/Toronto'
+    }
 }
 
 const positions = ref({})
@@ -122,12 +122,12 @@ const planetTheme = {
 }
 
 function getOffset(tz, year, month, day, hour, minute) {
-  const date = new Date(Date.UTC(year, month - 1, day, hour, minute))
+    const date = new Date(Date.UTC(year, month - 1, day, hour, minute))
 
-  const utc = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
-  const target = new Date(date.toLocaleString('en-US', { timeZone: tz }))
+    const utc = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
+    const target = new Date(date.toLocaleString('en-US', { timeZone: tz }))
 
-  return (target - utc) / (1000 * 60 * 60)
+    return (target - utc) / (1000 * 60 * 60)
 }
 
 function aspectSentence(a, b, type, degA, degB) {
@@ -578,201 +578,236 @@ onMounted(async () => {
 <template>
     <ClientOnly>
         <div style="text-align:center">
+            <div class="wrapper">
+                <h2>Horoscope</h2>
 
-            <h2>Horoscope</h2>
+                <div class="input-panel">
+                    <input type="date" v-model="birthDate" />
+                    <input type="time" v-model="birthTime" />
+                    <select v-model="birthLocation">
+                        <option value="tokyo">Tokyo</option>
+                        <option value="montreal">Montreal</option>
+                    </select>
+                    <button @click="calculateChart">Calculate</button>
+                </div>
 
-            <div class="input-panel">
-                <input type="date" v-model="birthDate" />
-                <input type="time" v-model="birthTime" />
-                <select v-model="birthLocation">
-                    <option value="tokyo">Tokyo</option>
-                    <option value="montreal">Montreal</option>
-                </select>
-                <button @click="calculateChart">Calculate</button>
-            </div>
+                <svg width="375" height="375">
 
-            <svg width="400" height="400">
+                    <!-- 外円 -->
+                    <circle :cx="cx" :cy="cy" r="174" stroke="black" fill="none" />
+                    <circle :cx="cx" :cy="cy" r="140" stroke="#aaa" fill="none" />
 
-                <!-- 外円 -->
-                <circle :cx="cx" :cy="cy" r="180" stroke="black" fill="none" />
-                <circle :cx="cx" :cy="cy" r="140" stroke="#aaa" fill="none" />
+                    <!-- 星座区切り -->
+                    <g>
+                        <line v-for="i in 12" :key="i" :x1="cx" :y1="cy" :x2="polarToCartesian(cx, cy, 174, i * 30).x"
+                            :y2="polarToCartesian(cx, cy, 174, i * 30).y" stroke="#ddd" />
+                    </g>
 
-                <!-- 星座区切り -->
-                <g>
-                    <line v-for="i in 12" :key="i" :x1="cx" :y1="cy" :x2="polarToCartesian(cx, cy, 180, i * 30).x"
-                        :y2="polarToCartesian(cx, cy, 180, i * 30).y" stroke="#ddd" />
-                </g>
+                    <!-- 星座 -->
+                    <g>
+                        <text v-for="i in 12" :key="'z' + i" :x="polarToCartesian(cx, cy, 155, i * 30 + 15 - 30).x"
+                            :y="polarToCartesian(cx, cy, 155, i * 30 + 15 - 30).y" text-anchor="middle"
+                            alignment-baseline="middle" font-size="16">
+                            {{ zodiac[i - 1] }}
+                        </text>
+                    </g>
 
-                <!-- 星座 -->
-                <g>
-                    <text v-for="i in 12" :key="'z' + i" :x="polarToCartesian(cx, cy, 165, i * 30 + 15 - 30).x"
-                        :y="polarToCartesian(cx, cy, 165, i * 30 + 15 - 30).y" text-anchor="middle"
-                        alignment-baseline="middle" font-size="16">
-                        {{ zodiac[i - 1] }}
-                    </text>
-                </g>
+                    <!-- アスペクト -->
+                    <g v-if="isReady">
+                        <line v-for="(line, i) in aspectLines" :key="i" :x1="line.x1" :y1="line.y1" :x2="line.x2"
+                            :y2="line.y2" :stroke="line.color" stroke-linecap="round" :opacity="line.opacity"
+                            :stroke-width="line.width" />
+                    </g>
 
-                <!-- アスペクト -->
-                <g v-if="isReady">
-                    <line v-for="(line, i) in aspectLines" :key="i" :x1="line.x1" :y1="line.y1" :x2="line.x2"
-                        :y2="line.y2" :stroke="line.color" stroke-linecap="round" :opacity="line.opacity"
-                        :stroke-width="line.width" />
-                </g>
+                    <!-- 惑星 -->
+                    <g v-if="isReady">
+                        <g v-for="(deg, name) in positions" :key="name">
 
-                <!-- 惑星 -->
-                <g v-if="isReady">
-                    <g v-for="(deg, name) in positions" :key="name">
+                            <circle :cx="polarToCartesian(cx, cy, 120, deg).x" :cy="polarToCartesian(cx, cy, 120, deg).y"
+                                r="4" :fill="getPlanetColor(name)" />
 
-                        <circle :cx="polarToCartesian(cx, cy, 120, deg).x" :cy="polarToCartesian(cx, cy, 120, deg).y"
-                            r="4" :fill="getPlanetColor(name)" />
+                            <text :x="polarToCartesian(cx, cy, 130, deg).x" :y="polarToCartesian(cx, cy, 130, deg).y"
+                                text-anchor="middle" alignment-baseline="middle" font-size="14">
+                                {{ name }}
+                            </text>
 
-                        <text :x="polarToCartesian(cx, cy, 130, deg).x" :y="polarToCartesian(cx, cy, 130, deg).y"
-                            text-anchor="middle" alignment-baseline="middle" font-size="14">
-                            {{ name }}
+                        </g>
+                    </g>
+
+                    <g v-if="isReady">
+                        <line v-for="(deg, i) in houses.slice(1)" :key="'house' + i" :x1="cx" :y1="cy"
+                            :x2="polarToCartesian(cx, cy, 174, deg).x" :y2="polarToCartesian(cx, cy, 174, deg).y"
+                            stroke="#666" stroke-width="1.5" />
+                    </g>
+
+                    <g v-if="isReady">
+
+                        <!-- ASC -->
+                        <text :x="polarToCartesian(cx, cy, 187, angles.ASC).x"
+                            :y="polarToCartesian(cx, cy, 187, angles.ASC).y" text-anchor="middle" font-size="12">
+                            ASC
+                        </text>
+
+                        <!-- MC -->
+                        <text :x="polarToCartesian(cx, cy, 187, angles.MC).x"
+                            :y="polarToCartesian(cx, cy, 187, angles.MC).y" text-anchor="middle" font-size="12">
+                            MC
                         </text>
 
                     </g>
-                </g>
-
-                <g v-if="isReady">
-                    <line v-for="(deg, i) in houses.slice(1)" :key="'house' + i" :x1="cx" :y1="cy"
-                        :x2="polarToCartesian(cx, cy, 180, deg).x" :y2="polarToCartesian(cx, cy, 180, deg).y"
-                        stroke="#666" stroke-width="1.5" />
-                </g>
-
-                <g v-if="isReady">
-
-                    <!-- ASC -->
-                    <text :x="polarToCartesian(cx, cy, 190, angles.ASC).x"
-                        :y="polarToCartesian(cx, cy, 190, angles.ASC).y" text-anchor="middle" font-size="12">
-                        ASC
-                    </text>
-
-                    <!-- MC -->
-                    <text :x="polarToCartesian(cx, cy, 190, angles.MC).x"
-                        :y="polarToCartesian(cx, cy, 190, angles.MC).y" text-anchor="middle" font-size="12">
-                        MC
-                    </text>
-
-                </g>
 
 
-            </svg>
+                </svg>
 
-        </div>
-        <div v-if="isReady" class="panel">
-
-            <div class="col">
-                <h3>🪐 Planets</h3>
-                <div v-for="p in planetList" :key="p.name">
-                    <div><strong>{{ p.sentence }}</strong></div>
-                    <div style="font-size:12px;color:#888">
-                        {{ p.text }}
+                <div v-if="isReady" class="panel">
+                    <div class="col">
+                        <h3>Planets</h3>
+                        <div v-for="p in planetList" :key="p.name"
+                        class="planets-item">
+                            <div><p class="desc">{{ p.sentence }}</p></div>
+                            <p class="deg">
+                                {{ p.text }}
+                            </p>
+                        </div>
+                    </div>
+        
+                    <div class="col">
+                        <h3>Houses</h3>
+                        <div v-for="h in houseList" :key="h.house" class="house">
+                            <span class="name">{{ h.house }}</span>
+                            <span class="deg">{{ h.text }}</span>
+                        </div>
+                    </div>
+        
+                </div>
+        
+                <div v-if="isReady" class="aspect-panel">
+                    <h3>Aspects</h3>
+        
+                    <div v-for="(a, i) in aspectList" :key="i" class="aspect-row">
+                        <div>
+                            {{ a.planetA }} {{ aspectSymbol(a.type) }} {{ a.planetB }}
+                        </div>
+                        <div class="orb">orb: {{ a.orb }}°</div>
+                        <div class="interp">
+                            {{ a.interpretation }}
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="col">
-                <h3>🏠 Houses</h3>
-                <div v-for="h in houseList" :key="h.house" class="row">
-                    <span class="name">{{ h.house }}</span>
-                    <span class="deg">{{ h.text }}</span>
+        
+                <h3>
+                    Reading
+                </h3>
+                <div class="reading">
+                    {{ fullReading }}
                 </div>
             </div>
 
         </div>
 
-        <div v-if="isReady" class="aspect-panel">
-
-            <h3>🔺 Aspects</h3>
-
-            <div v-for="(a, i) in aspectList" :key="i" class="aspect-row">
-                <div>
-                    {{ a.planetA }} {{ aspectSymbol(a.type) }} {{ a.planetB }}
-                </div>
-                <div class="orb">orb: {{ a.orb }}°</div>
-                <div class="interp">
-                    {{ a.interpretation }}
-                </div>
-            </div>
-        </div>
-
-        <div class="reading">
-            {{ fullReading }}
-        </div>
     </ClientOnly>
 </template>
 
-<style>
+<style lang="scss">
+p{
+    margin: 0;
+}
+.input-panel{
+    display: flex;
+    gap: 8px;
+}
+.wrapper{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
 .panel {
     display: flex;
-    gap: 40px;
+    gap: 20px;
     justify-content: center;
     margin-top: 20px;
-}
 
-.col {
-    width: 170px;
-}
+    .col {
+        width: 170px;
+        .planets-item{
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            .desc{
+                font-size: 13px;
+                line-height: 1.5em;
+                font-weight: normal;
+            }
+            .deg{
+                margin: 0;
+                font-size: 12px;
+                line-height: 1.5em;
+                font-weight: normal;
+                color:#888
+            }
+        }
+        .house {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding: 4px 0;
+    
+            .name {
+                font-size: 13px;
+            }
+    
+            .deg {
+                width: 70px;
+                font-family: monospace;
+            }
+    
+            .house {
+                font-size: 12px;
+                color: #999;
+                margin-left: 6px;
+            }
+        }
+    }
 
-.row {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #eee;
-    padding: 4px 0;
-}
-
-.name {
-    font-weight: bold;
-}
-
-.deg {
-    font-family: monospace;
-}
-
-.house {
-    font-size: 12px;
-    color: #999;
-    margin-left: 6px;
 }
 
 .aspect-panel {
-    margin-top: 20px;
-    margin-inline: auto;
-}
+    width: 360px;
+    text-align: left;
+    .aspect-row {
+        display: block;
+        padding: 6px 0;
+    }
 
+    .orb {
+        font-size: 13px;
+        color: #999;
+    }
+
+    .interp {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+    }
+
+    .type {
+        flex: 1;
+        text-align: center;
+    }
+}
 
 .p {
     width: 30px;
     text-align: center;
 }
 
-.aspect-row {
-    display: block;
-    padding: 6px 0;
-}
-
-.orb {
-    font-size: 12px;
-    color: #999;
-}
-
-.interp {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
-}
-
-.type {
-    flex: 1;
-    text-align: center;
-}
 
 .reading {
-    max-width: 500px;
-    margin: 20px auto;
-    font-size: 14px;
-    line-height: 1.6;
+    max-width: 360px;
+    font-size: 13px;
+    line-height: 1.6em;
     text-align: left;
 }
 </style>
