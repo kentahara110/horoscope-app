@@ -1,4 +1,14 @@
 <script setup>
+useHead({
+  title: 'Astrology Chart',
+  meta: [
+    { name: 'description', content: 'Generate your natal chart instantly' }
+  ],
+  link: [
+    { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+  ]
+})
+
 import { ref, onMounted } from 'vue'
 
 const birthDate = ref('1993-01-10')
